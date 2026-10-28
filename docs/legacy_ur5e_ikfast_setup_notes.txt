@@ -1,0 +1,156 @@
+HISTORICAL REFERENCE: copied from the UR5e project.
+These notes describe an earlier experiment, not the UR12e setup.
+Use ../project_commands.txt for the current TRAC-IK configuration.
+
+UR5e IKFast Setup Notes
+=======================
+
+Goal
+----
+Replace MoveIt's default numerical KDL inverse-kinematics solver with a
+UR5e analytical/IKFast-style solver. The current Cartesian path is smooth,
+but KDL changes IK branches and creates joint jumps as large as roughly
+140-178 degrees between neighboring poses.
+
+Current project state
+---------------------
+- ROS 2 distribution: Jazzy
+- Robot: UR5e
+- MoveIt planning group: ur_manipulator
+- IK base link: base_link
+- IK end-effector link: tool0
+- IK type: Transform6D
+- Existing workspace: /home/piero/ur_ws
+- Existing motion package: /home/piero/ur_ws/src/ur5e_motion
+- The current MoveIt configuration uses:
+    kdl_kinematics_plugin/KDLKinematicsPlugin
+
+Do each section separately and check that it succeeds before continuing.
+
+
+1. Source ROS
+-------------
+
+    source /opt/ros/jazzy/setup.bash
+
+
+2. Install Docker if needed
+---------------------------
+
+    sudo apt update && sudo apt install docker.io
+
+Verify that the Docker service is running:
+
+    sudo docker info
+
+Allow the current user to access Docker without sudo:
+
+    sudo usermod -aG docker "$USER"
+
+Docker group membership effectively grants root-level control. Log out and
+back in after running this command, or activate it in the current terminal:
+
+    newgrp docker
+
+Confirm that "docker" appears in the active group list:
+
+    id -nG
+
+Confirm Docker works without sudo:
+
+    docker info
+
+
+3. Generate a resolved UR5e URDF
+--------------------------------
+
+    source /opt/ros/jazzy/setup.bash
+
+    ros2 run xacro xacro \
+      -o /tmp/ur5e.urdf \
+      /opt/ros/jazzy/share/ur_description/urdf/ur.urdf.xacro \
+      name:=ur \
+      ur_type:=ur5e
+
+Validate the generated file:
+
+    check_urdf /tmp/ur5e.urdf
+
+Do not continue if check_urdf reports an invalid robot model.
+
+
+4. Generate the IKFast MoveIt plugin
+------------------------------------
+
+Run the generator from the workspace source directory so the generated ROS
+package is created under /home/piero/ur_ws/src:
+
+    cd /home/piero/ur_ws/src
+
+    ros2 run moveit_kinematics auto_create_ikfast_moveit_plugin.sh \
+      --iktype Transform6D \
+      /tmp/ur5e.urdf \
+      ur_manipulator \
+      base_link \
+      tool0
+
+The script first tries to convert the URDF to Collada directly. If that is
+unavailable, it uses Docker to build/run an OpenRAVE image. This can take
+several minutes and may require downloading a large Docker image.
+
+The earlier failure was:
+
+    docker: command not found
+
+Docker was then installed, the user was added to the docker group, and
+"docker info" worked without sudo. The next action is to rerun the generator
+command above.
+
+
+5. Stop after generation and inspect the result
+------------------------------------------------
+
+Do not modify the system MoveIt package under /opt/ros/jazzy.
+
+After the generator succeeds, record the name of the newly created package:
+
+    find /home/piero/ur_ws/src -maxdepth 2 -name package.xml -print
+
+Also find the generated plugin description and its exact class name:
+
+    find /home/piero/ur_ws/src -iname '*plugin*.xml' -print
+
+The exact plugin class string must be copied from that XML file. Do not guess
+it when creating kinematics.yaml.
+
+
+Later work (not completed yet)
+------------------------------
+After successful IKFast generation:
+
+1. Build the generated plugin in the ROS workspace.
+2. Create a custom MoveIt overlay package and kinematics.yaml.
+3. Configure ur_manipulator to use the generated plugin class.
+4. Launch the UR simulation using the custom MoveIt launch file.
+5. Rerun ik_client and compare joint-continuity diagnostics against KDL.
+
+The system file below currently selects KDL and should not be edited directly:
+
+    /opt/ros/jazzy/share/ur_moveit_config/config/kinematics.yaml
+
+The custom configuration should live in /home/piero/ur_ws/src and override
+the system behavior only after the workspace has been built and sourced.
+
+
+If something fails
+------------------
+Save all output starting from the command that failed, including the first
+error above any final "process exited" message. Also record:
+
+    pwd
+    echo "$ROS_DISTRO"
+    docker --version
+    docker info
+
+Do not use sudo to run the complete ROS/IKFast generator. Fix normal-user
+Docker access instead, otherwise generated files may be owned by root.
