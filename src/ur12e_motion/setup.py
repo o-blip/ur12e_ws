@@ -21,7 +21,7 @@ setup(
     zip_safe=True,
     maintainer='piero',
     maintainer_email='piero@todo.todo',
-    description='UR12e winding experiments with TRAC-IK and reference prism geometry.',
+    description='UR12e motion foundation for D-bar winding with TRAC-IK.',
     license='Apache-2.0',
     extras_require={
         'test': [
@@ -31,7 +31,6 @@ setup(
     entry_points={
         'console_scripts': [
             'ik_client = ur12e_motion.ik_client:main',
-            'winding_visualizer = ur12e_motion.winding_visualizer:main',
         ],
     },
 )

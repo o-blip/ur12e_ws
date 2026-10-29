@@ -38,6 +38,9 @@ source /opt/ros/jazzy/setup.bash
 source install/setup.bash
 ros2 run ur12e_motion ik_client
 
+Press Enter to approach node 1 and start winding. After each string, secure
+and cut it, then press Enter to continue. Ctrl+C stops the sequence.
+
 
 Optional: verify that MoveIt is using TRAC-IK
 ---------------------------------------------

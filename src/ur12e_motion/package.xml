@@ -3,18 +3,16 @@
 <package format="3">
   <name>ur12e_motion</name>
   <version>0.0.0</version>
-  <description>UR12e winding experiments with TRAC-IK and reference prism geometry.</description>
+  <description>UR12e motion foundation for D-bar winding with TRAC-IK.</description>
   <maintainer email="piero@todo.todo">piero</maintainer>
   <license>Apache-2.0</license>
 
   <depend>rclpy</depend>
   <depend>moveit_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>control_msgs</depend>
-  <depend>trajectory_msgs</depend>
+  <depend>dbar_tensegrity</depend>
   <depend>python3-numpy</depend>
   <depend>python3-scipy</depend>
-  <depend>visualization_msgs</depend>
 
   <exec_depend>ament_index_python</exec_depend>
   <exec_depend>launch</exec_depend>
@@ -27,7 +25,6 @@
   <exec_depend>ur_simulation_gz</exec_depend>
   <exec_depend>rviz2</exec_depend>
   <exec_depend>warehouse_ros_sqlite</exec_depend>
-  <exec_depend>python3-matplotlib</exec_depend>
 
   <!-- Runtime kinematics plugin selected by config/trac_ik_kinematics.yaml. -->
   <exec_depend>trac_ik_kinematics_plugin</exec_depend>
